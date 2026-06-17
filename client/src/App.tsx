@@ -4,36 +4,44 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import { GuestSessionProvider } from "./contexts/GuestSessionContext";
+import StanLayout from "./components/StanLayout";
+import MorningBriefing from "./pages/MorningBriefing";
+import CompanionChat from "./pages/CompanionChat";
+import Tournaments from "./pages/Tournaments";
+import TournamentDetail from "./pages/TournamentDetail";
+import PickBattle from "./pages/PickBattle";
+import MemoryKeeper from "./pages/MemoryKeeper";
+import FamilyDrops from "./pages/FamilyDrops";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <StanLayout>
+      <Switch>
+        <Route path="/" component={MorningBriefing} />
+        <Route path="/chat" component={CompanionChat} />
+        <Route path="/tournaments" component={Tournaments} />
+        <Route path="/tournaments/:name/:tour" component={TournamentDetail} />
+        <Route path="/picks" component={PickBattle} />
+        <Route path="/memories" component={MemoryKeeper} />
+        <Route path="/drops" component={FamilyDrops} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </StanLayout>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+      <ThemeProvider defaultTheme="dark">
+        <GuestSessionProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </GuestSessionProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
