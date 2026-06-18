@@ -10,6 +10,7 @@ const navItems = [
   { path: "/chat", label: "Stan", icon: "🎾" },
   { path: "/tournaments", label: "Tours", icon: "🏆" },
   { path: "/picks", label: "Picks", icon: "⚔️" },
+  { path: "/trivia", label: "Trivia", icon: "🧠" },
   { path: "/memories", label: "Memories", icon: "📸" },
   { path: "/drops", label: "Drops", icon: "💌" },
 ];

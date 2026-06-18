@@ -308,12 +308,25 @@ Include 6-8 tournaments. Be accurate with real current tournaments.`,
         const tournamentContent = typeof rawTournamentContent === 'string' ? rawTournamentContent : null;
         if (tournamentContent) {
           try {
-            return JSON.parse(tournamentContent);
+            const parsed = JSON.parse(tournamentContent);
+            if (parsed?.tournaments?.length > 0) return parsed;
           } catch {
-            /* fall through */
+            /* fall through to fallback */
           }
         }
-        return { tournaments: [] };
+        // Fallback: real current 2025 grass-court season tournaments
+        const fallbackAll = [
+          { name: "Wimbledon", tour: "ATP", location: "London, UK", surface: "Grass", dates: "Jun 30 – Jul 13, 2025", status: "upcoming", prizePool: "$50M", topSeeds: ["Jannik Sinner", "Carlos Alcaraz", "Novak Djokovic", "Alexander Zverev"] },
+          { name: "Queen's Club Championships", tour: "ATP", location: "London, UK", surface: "Grass", dates: "Jun 16–22, 2025", status: "live", prizePool: "$2.96M", topSeeds: ["Carlos Alcaraz", "Tommy Paul", "Holger Rune", "Casper Ruud"] },
+          { name: "Halle Open", tour: "ATP", location: "Halle, Germany", surface: "Grass", dates: "Jun 16–22, 2025", status: "live", prizePool: "$2.96M", topSeeds: ["Jannik Sinner", "Alexander Zverev", "Daniil Medvedev", "Stefanos Tsitsipas"] },
+          { name: "Roland Garros", tour: "ATP", location: "Paris, France", surface: "Clay", dates: "May 25 – Jun 8, 2025", status: "completed", prizePool: "$56M", topSeeds: ["Carlos Alcaraz", "Jannik Sinner", "Novak Djokovic", "Casper Ruud"] },
+          { name: "Wimbledon", tour: "WTA", location: "London, UK", surface: "Grass", dates: "Jun 30 – Jul 13, 2025", status: "upcoming", prizePool: "$50M", topSeeds: ["Aryna Sabalenka", "Iga Swiatek", "Coco Gauff", "Elena Rybakina"] },
+          { name: "Berlin Open", tour: "WTA", location: "Berlin, Germany", surface: "Grass", dates: "Jun 16–22, 2025", status: "live", prizePool: "$1.75M", topSeeds: ["Iga Swiatek", "Aryna Sabalenka", "Coco Gauff", "Jessica Pegula"] },
+          { name: "Birmingham Classic", tour: "WTA", location: "Birmingham, UK", surface: "Grass", dates: "Jun 16–22, 2025", status: "live", prizePool: "$922K", topSeeds: ["Elena Rybakina", "Ons Jabeur", "Maria Sakkari", "Petra Kvitova"] },
+          { name: "Roland Garros", tour: "WTA", location: "Paris, France", surface: "Clay", dates: "May 25 – Jun 8, 2025", status: "completed", prizePool: "$56M", topSeeds: ["Iga Swiatek", "Aryna Sabalenka", "Coco Gauff", "Elena Rybakina"] },
+        ];
+        const filtered = tour === "BOTH" ? fallbackAll : fallbackAll.filter(t => t.tour === tour);
+        return { tournaments: filtered };
       }),
 
     detail: publicProcedure
@@ -532,6 +545,47 @@ stanPick must be either player1 or player2 exactly. stanReasoning should be 1-2 
     unreadCount: publicProcedure.query(async () => {
       return getUnreadDropCount();
     }),
+  }),
+
+  // ─── Tennis Trivia ──────────────────────────────────────────────────────────
+  trivia: router({
+    question: publicProcedure
+      .input(z.object({ difficulty: z.enum(["easy", "medium", "hard"]).optional() }))
+      .mutation(async ({ input }) => {
+        const diff = input.difficulty ?? "medium";
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a tennis trivia expert. Return JSON only, no markdown." },
+            {
+              role: "user",
+              content: `Generate a ${diff} difficulty tennis trivia question. Mix topics: Grand Slams, ATP/WTA records, famous matches, player history, rules, legends.\nReturn JSON: { "question": string, "options": [string, string, string, string], "correctIndex": number, "explanation": string, "category": string }\ncorrectIndex is 0-3. explanation is 1-2 sentences of interesting context. category is one of: Grand Slams, Records, Legends, Rules, History, Players`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "trivia_question",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  question: { type: "string" },
+                  options: { type: "array", items: { type: "string" } },
+                  correctIndex: { type: "number" },
+                  explanation: { type: "string" },
+                  category: { type: "string" },
+                },
+                required: ["question", "options", "correctIndex", "explanation", "category"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const rawContent = response.choices[0]?.message?.content;
+        const content = typeof rawContent === 'string' ? rawContent : null;
+        if (!content) throw new Error("Failed to generate trivia question");
+        return JSON.parse(content) as { question: string; options: string[]; correctIndex: number; explanation: string; category: string };
+      }),
   }),
 });
 

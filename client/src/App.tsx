@@ -13,6 +13,7 @@ import TournamentDetail from "./pages/TournamentDetail";
 import PickBattle from "./pages/PickBattle";
 import MemoryKeeper from "./pages/MemoryKeeper";
 import FamilyDrops from "./pages/FamilyDrops";
+import TennisTriva from "./pages/TennisTriva";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/picks" component={PickBattle} />
         <Route path="/memories" component={MemoryKeeper} />
         <Route path="/drops" component={FamilyDrops} />
+        <Route path="/trivia" component={TennisTriva} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
