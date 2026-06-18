@@ -70,3 +70,11 @@
 - [x] TypeScript: 0 errors
 - [x] Final screenshot verification — all 6 pages confirmed
 - [x] Checkpoint and deliver
+
+## TTS Update
+- [x] "Listen to Full Briefing" master button at top of Morning Briefing (reads entire briefing aloud)
+- [x] Individual listen buttons on Stan's message, Morning Prayer, ATP Today, WTA Today sections
+- [x] Animated sound wave indicator when audio is playing
+- [x] Tap again to stop — toggle behaviour
+- [x] Preferred warm English voice selection (Daniel, Alex, Samantha, Google US, Microsoft)
+- [x] Speech cancelled on page unmount (no ghost audio)
