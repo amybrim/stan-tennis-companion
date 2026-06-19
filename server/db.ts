@@ -207,3 +207,155 @@ export async function getPickBattleScore(sessionToken: string) {
   const steveWins = resolved.filter((r) => r.steveCorrect).length;
   return { stanWins, steveWins, total: resolved.length };
 }
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+import { analyticsEvents } from "../drizzle/schema";
+import { sql } from "drizzle-orm";
+
+export async function logAnalyticsEvent(data: {
+  guestId: string;
+  event: string;
+  page?: string;
+  label?: string;
+  metadata?: string;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(analyticsEvents).values({
+      guestId: data.guestId,
+      event: data.event,
+      page: data.page ?? null,
+      label: data.label ?? null,
+      metadata: data.metadata ?? null,
+    });
+  } catch (e) {
+    // fire-and-forget — never throw
+    console.warn("[Analytics] Failed to log event:", e);
+  }
+}
+
+export async function getEventCounts() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ event: analyticsEvents.event, count: sql<number>`count(*)` })
+    .from(analyticsEvents)
+    .groupBy(analyticsEvents.event)
+    .orderBy(sql`count(*) desc`);
+  return rows;
+}
+
+export async function getTopPhrases(limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ label: analyticsEvents.label, count: sql<number>`count(*)` })
+    .from(analyticsEvents)
+    .where(sql`${analyticsEvents.event} IN ('voice_aid_phrase_tap','voice_aid_typed_speak','chat_message_sent')`)
+    .groupBy(analyticsEvents.label)
+    .orderBy(sql`count(*) desc`)
+    .limit(limit);
+  return rows.filter((r) => r.label);
+}
+
+export async function getHourlyActivity() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      hour: sql<number>`HOUR(${analyticsEvents.createdAt})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .groupBy(sql`HOUR(${analyticsEvents.createdAt})`)
+    .orderBy(sql`HOUR(${analyticsEvents.createdAt})`);
+  return rows;
+}
+
+export async function getDailyActivity(days = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      date: sql<string>`DATE(${analyticsEvents.createdAt})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(sql`${analyticsEvents.createdAt} >= DATE_SUB(NOW(), INTERVAL ${days} DAY)`)
+    .groupBy(sql`DATE(${analyticsEvents.createdAt})`)
+    .orderBy(sql`DATE(${analyticsEvents.createdAt})`);
+  return rows;
+}
+
+export async function getDailyVoiceAid(days = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      date: sql<string>`DATE(${analyticsEvents.createdAt})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      sql`${analyticsEvents.createdAt} >= DATE_SUB(NOW(), INTERVAL ${days} DAY)
+        AND ${analyticsEvents.event} IN ('voice_aid_phrase_tap','voice_aid_typed_speak','voice_aid_say_again')`
+    )
+    .groupBy(sql`DATE(${analyticsEvents.createdAt})`)
+    .orderBy(sql`DATE(${analyticsEvents.createdAt})`);
+  return rows;
+}
+
+export async function getCategoryBreakdown() {
+  const db = await getDb();
+  if (!db) return [];
+  // Map events to categories
+  const rows = await db
+    .select({
+      event: analyticsEvents.event,
+      count: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .groupBy(analyticsEvents.event);
+
+  const categoryMap: Record<string, string> = {
+    chat_message_sent: "Communication",
+    voice_aid_phrase_tap: "Communication",
+    voice_aid_typed_speak: "Communication",
+    voice_aid_say_again: "Communication",
+    morning_briefing_opened: "Daily Routine",
+    trivia_answered: "Tennis",
+    showdown_pick_made: "Tennis",
+    tournament_viewed: "Tennis",
+    family_drop_played: "Social",
+    family_drop_left: "Social",
+    memory_added: "Social",
+    page_view: "Navigation",
+  };
+
+  const totals: Record<string, number> = {};
+  for (const row of rows) {
+    const cat = categoryMap[row.event] ?? "Other";
+    totals[cat] = (totals[cat] ?? 0) + Number(row.count);
+  }
+  return Object.entries(totals).map(([category, count]) => ({ category, count }));
+}
+
+export async function getTotalSessions() {
+  const db = await getDb();
+  if (!db) return 0;
+  const rows = await db
+    .select({ count: sql<number>`count(distinct ${analyticsEvents.guestId})` })
+    .from(analyticsEvents);
+  return Number(rows[0]?.count ?? 0);
+}
+
+export async function getTotalEvents() {
+  const db = await getDb();
+  if (!db) return 0;
+  const rows = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(analyticsEvents);
+  return Number(rows[0]?.count ?? 0);
+}

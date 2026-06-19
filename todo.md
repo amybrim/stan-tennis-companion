@@ -78,3 +78,13 @@
 - [x] Tap again to stop — toggle behaviour
 - [x] Preferred warm English voice selection (Daniel, Alex, Samantha, Google US, Microsoft)
 - [x] Speech cancelled on page unmount (no ghost audio)
+
+## Analytics System
+- [x] analytics_events table in DB schema and migration applied
+- [x] Server DB helpers: logAnalyticsEvent, getEventCounts, getTopPhrases, getHourlyActivity, getDailyActivity, getDailyVoiceAid, getCategoryBreakdown, getTotalSessions, getTotalEvents
+- [x] analytics.log and analytics.dashboard tRPC procedures
+- [x] useAnalytics hook with fire-and-forget tracking (never blocks user)
+- [x] Tracking wired into all pages: MorningBriefing, CompanionChat, PickBattle, MemoryKeeper, FamilyDrops, TennisTriva, Tournaments
+- [x] /admin/analytics dashboard with 30-day trend, feature usage bar chart, category pie chart, hourly heatmap, top phrases
+- [x] Printable usage report button (window.print with print-only table layout)
+- [x] Transparency footer note from Julia in StanLayout

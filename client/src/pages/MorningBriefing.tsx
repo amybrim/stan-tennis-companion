@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 // ─── TTS Hook ─────────────────────────────────────────────────────────────────
 function useSpeech() {
@@ -161,6 +162,12 @@ function SpeakingWave() {
 export default function MorningBriefing() {
   const [, navigate] = useLocation();
   const { speak, stop, speaking, activeId } = useSpeech();
+  const { track } = useAnalytics();
+
+  useEffect(() => {
+    track("morning_briefing_opened", undefined, "/morning");
+    track("page_view", undefined, "/morning");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isLoading, error } = trpc.briefing.daily.useQuery(undefined, {
     staleTime: 1000 * 60 * 30,

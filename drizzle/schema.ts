@@ -80,3 +80,16 @@ export const chatMessages = mysqlTable("chat_messages", {
 });
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Analytics Events — track how Steve uses the app
+export const analyticsEvents = mysqlTable("analytics_events", {
+  id: int("id").autoincrement().primaryKey(),
+  guestId: varchar("guestId", { length: 64 }).notNull(),
+  event: varchar("event", { length: 128 }).notNull(),
+  page: varchar("page", { length: 128 }),
+  label: varchar("label", { length: 256 }),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;

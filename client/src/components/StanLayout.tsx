@@ -133,6 +133,14 @@ export default function StanLayout({ children }: StanLayoutProps) {
         {children}
       </main>
 
+      {/* Transparency note — visible in main content scroll area */}
+      <div
+        className="text-center py-3 px-4"
+        style={{ color: "#3A4F7A", fontSize: "0.7rem" }}
+      >
+        🤍 Julia added light usage tracking to help build you more of what you love.
+      </div>
+
       {/* Bottom Navigation */}
       <nav
         className="fixed bottom-0 left-0 right-0 flex items-center justify-around px-2 py-2 border-t z-50"

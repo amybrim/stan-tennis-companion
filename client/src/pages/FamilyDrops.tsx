@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useGuestSession } from "@/contexts/GuestSessionContext";
 
 export default function FamilyDrops() {
+  const { token } = useGuestSession();
+  const { track } = useAnalytics();
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [fromName, setFromName] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    track("page_view", undefined, "/drops");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const utils = trpc.useUtils();
 
@@ -15,6 +23,7 @@ export default function FamilyDrops() {
 
   const addMutation = trpc.drops.add.useMutation({
     onSuccess: () => {
+      track("family_drop_left", fromName.slice(0, 50), "/drops");
       toast.success("Drop left for Steve! 💌");
       setShowLeaveForm(false);
       setFromName("");

@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useGuestSession } from "@/contexts/GuestSessionContext";
 import { toast } from "sonner";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const EMOJIS = ["🎾", "🏆", "⭐", "🎉", "💪", "❤️", "📸", "🌟", "🎯", "🙏"];
 
 export default function MemoryKeeper() {
   const { token } = useGuestSession();
+  const { track } = useAnalytics();
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    track("page_view", undefined, "/memories");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [authorName, setAuthorName] = useState("Steve");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -22,6 +28,7 @@ export default function MemoryKeeper() {
 
   const addMutation = trpc.memories.add.useMutation({
     onSuccess: () => {
+      track("memory_added", title.slice(0, 100), "/memories");
       toast.success("Memory saved! 📸");
       setShowForm(false);
       setTitle("");

@@ -9,12 +9,21 @@ import {
   addMemory,
   createPickBattle,
   deleteMemory,
+  getCategoryBreakdown,
   getChatHistory,
+  getDailyActivity,
+  getDailyVoiceAid,
+  getEventCounts,
   getFamilyDrops,
+  getHourlyActivity,
   getMemories,
   getPickBattleScore,
   getPickBattles,
+  getTotalEvents,
+  getTotalSessions,
+  getTopPhrases,
   getUnreadDropCount,
+  logAnalyticsEvent,
   markDropRead,
   resolvePickBattle,
   saveChatMessage,
@@ -587,6 +596,34 @@ stanPick must be either player1 or player2 exactly. stanReasoning should be 1-2 
         return JSON.parse(content) as { question: string; options: string[]; correctIndex: number; explanation: string; category: string };
       }),
   }),
+  analytics: router({
+    log: publicProcedure
+      .input(z.object({
+        guestId: z.string(),
+        event: z.string(),
+        page: z.string().optional(),
+        label: z.string().optional(),
+        metadata: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // fire-and-forget — never blocks the user
+        logAnalyticsEvent(input).catch(() => {});
+        return { ok: true };
+      }),
+    dashboard: publicProcedure.query(async () => {
+      const [features, topPhrases, hourly, daily, dailyVoiceAid, categories, totalSessions, totalEvents] =
+        await Promise.all([
+          getEventCounts(),
+          getTopPhrases(20),
+          getHourlyActivity(),
+          getDailyActivity(30),
+          getDailyVoiceAid(30),
+          getCategoryBreakdown(),
+          getTotalSessions(),
+          getTotalEvents(),
+        ]);
+      return { features, topPhrases, hourly, daily, dailyVoiceAid, categories, totalSessions, totalEvents };
+    }),
+  }),
 });
-
 export type AppRouter = typeof appRouter;

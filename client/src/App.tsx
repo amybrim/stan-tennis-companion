@@ -14,6 +14,7 @@ import PickBattle from "./pages/PickBattle";
 import MemoryKeeper from "./pages/MemoryKeeper";
 import FamilyDrops from "./pages/FamilyDrops";
 import TennisTriva from "./pages/TennisTriva";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/drops" component={FamilyDrops} />
         <Route path="/trivia" component={TennisTriva} />
         <Route path="/404" component={NotFound} />
+        <Route path="/admin/analytics" component={AnalyticsDashboard} />
         <Route component={NotFound} />
       </Switch>
     </StanLayout>

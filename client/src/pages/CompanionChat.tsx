@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { trpc } from "@/lib/trpc";
 import { useGuestSession } from "@/contexts/GuestSessionContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +14,16 @@ interface Message {
 
 export default function CompanionChat() {
   const { token } = useGuestSession();
+  const { track } = useAnalytics();
   const [input, setInput] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    track("page_view", undefined, "/chat");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const historyQuery = trpc.chat.history.useQuery(
     { sessionToken: token },
@@ -71,6 +77,7 @@ export default function CompanionChat() {
     setInput("");
     setIsSending(true);
 
+    track("chat_message_sent", text.slice(0, 100), "/chat");
     sendMutation.mutate({ sessionToken: token, message: text });
   };
 

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type TourFilter = "BOTH" | "ATP" | "WTA";
 
@@ -132,8 +133,13 @@ const ALL_TOURNAMENTS: Tournament[] = [
 ];
 
 export default function Tournaments() {
+  const { track } = useAnalytics();
   const [filter, setFilter] = useState<TourFilter>("BOTH");
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    track("page_view", undefined, "/tournaments");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tournaments =
     filter === "BOTH"
@@ -193,11 +199,10 @@ export default function Tournaments() {
               {group.map((t, i) => (
                 <button
                   key={i}
-                  onClick={() =>
-                    navigate(
-                      `/tournaments/${encodeURIComponent(t.name)}/${t.tour}`
-                    )
-                  }
+                  onClick={() => {
+                    track("tournament_viewed", `${t.name} (${t.tour})`, "/tournaments");
+                    navigate(`/tournaments/${encodeURIComponent(t.name)}/${t.tour}`);
+                  }}
                   className="w-full text-left rounded-2xl p-5 transition-all active:scale-[0.98] slide-up"
                   style={{ background: "#162347", border: "1px solid #1E2F5A" }}
                 >

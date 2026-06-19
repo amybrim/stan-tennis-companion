@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useGuestSession } from "@/contexts/GuestSessionContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface Battle {
   id: number;
@@ -21,7 +22,12 @@ interface Battle {
 
 export default function PickBattle() {
   const { token } = useGuestSession();
+  const { track } = useAnalytics();
   const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    track("page_view", undefined, "/picks");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [newBattle, setNewBattle] = useState<{
     id?: number;
     player1: string;
@@ -52,7 +58,8 @@ export default function PickBattle() {
   });
 
   const submitSteveMutation = trpc.picks.submitSteve.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      track("showdown_pick_made", String((variables as {stevePick?: string}).stevePick ?? ""), "/picks");
       toast.success("Your pick is in! Stan is watching...");
       utils.picks.list.invalidate();
       setNewBattle(null);

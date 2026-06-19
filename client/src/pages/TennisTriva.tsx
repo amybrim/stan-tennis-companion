@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -27,7 +28,12 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function TennisTriva() {
+  const { track } = useAnalytics();
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+
+  useEffect(() => {
+    track("page_view", undefined, "/trivia");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [question, setQuestion] = useState<TriviaQuestion | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -47,6 +53,10 @@ export default function TennisTriva() {
     setSelectedIndex(index);
     setRevealed(true);
     const isCorrect = index === question?.correctIndex;
+    track("trivia_answered", isCorrect ? "correct" : "wrong", "/trivia", {
+      difficulty,
+      category: question?.category,
+    });
     setScore((s) => ({
       correct: s.correct + (isCorrect ? 1 : 0),
       total: s.total + 1,
